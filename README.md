@@ -1,2 +1,2 @@
-# estante
-Estante do Livreiro
+# Estante do Livreiro
+Repositório dos fichamentos dos livreiros. 
