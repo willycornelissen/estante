@@ -172,6 +172,12 @@ body {
   gap: 1rem;
 }
 
+.header-user {
+  font-size: 0.85rem;
+  color: #888;
+  align-self: center;
+}
+
 .tabs {
   display: flex;
   gap: 0.25rem;

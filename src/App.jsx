@@ -319,7 +319,8 @@ function FindView({ books, loading, editable }) {
   )
 }
 
-const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL
+const ADMIN_EMAIL =
+  import.meta.env.VITE_ADMIN_EMAIL || 'willy.cornelissen@gmail.com'
 
 function App() {
   const [firebaseReady, setFirebaseReady] = useState(false)
@@ -382,9 +383,12 @@ function App() {
     <div className="app">
       <Header>
         {user ? (
-          <button className="ghost" onClick={signOut}>
-            Sair
-          </button>
+          <>
+            <span className="header-user">{user.email}</span>
+            <button className="ghost" onClick={signOut}>
+              Sair
+            </button>
+          </>
         ) : (
           <button className="ghost" onClick={() => setShowLogin((v) => !v)}>
             {showLogin ? 'Fechar' : 'Entrar'}
