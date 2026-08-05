@@ -32,9 +32,17 @@ Sem chave do Google Books no `.env`, a busca usa o OpenLibrary como fallback
    firebase deploy --only firestore
    ```
 
-   As regras garantem que cada usuário só lê/grava os próprios livros.
+   **Importante:** em `firestore.rules`, troque `SEU_EMAIL@exemplo.com` pelo
+   seu e-mail. As regras garantem que a estante é pública para leitura, mas só
+   o admin (seu e-mail) pode adicionar/editar/remover livros.
 
-6. Acesse o app, crie sua conta (primeiro acesso) e adicione livros.
+6. **Authentication → Users → Adicionar usuário** e crie a conta do admin com
+   o mesmo e-mail usado nas regras. O cadastro público foi removido: visitantes
+   veem o catálogo, e só o admin entra.
+
+7. Preencha `VITE_ADMIN_EMAIL` no `.env` com o mesmo e-mail (usado só para
+   mostrar/esconder os controles de edição no frontend — a segurança fica nas
+   regras).
 
 ## Deploy
 

@@ -5,10 +5,8 @@ import {
   deleteDoc,
   doc,
   onSnapshot,
-  query,
   serverTimestamp,
   updateDoc,
-  where,
 } from 'firebase/firestore'
 
 const booksCol = () => collection(db, 'books')
@@ -28,10 +26,8 @@ export async function addBook(book) {
 }
 
 export function subscribeBooks(cb) {
-  const uid = auth.currentUser.uid
-  return onSnapshot(
-    query(booksCol(), where('uid', '==', uid)),
-    (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...d.data() })))
+  return onSnapshot(booksCol(), (snap) =>
+    cb(snap.docs.map((d) => ({ id: d.id, ...d.data() })))
   )
 }
 

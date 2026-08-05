@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { searchBooks } from './lib/metadata'
 import { auth } from './lib/firebase'
-import { onAuthChange, signIn, signUp, signOut } from './lib/auth'
+import { onAuthChange, signIn, signOut } from './lib/auth'
 import { addBook, deleteBook, subscribeBooks, updateLocation } from './lib/books'
 import './App.css'
 
@@ -33,7 +33,6 @@ function Meta({ book }) {
 }
 
 function LoginForm() {
-  const [mode, setMode] = useState('entrar')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState(null)
@@ -44,20 +43,12 @@ function LoginForm() {
     setBusy(true)
     setError(null)
     try {
-      if (mode === 'entrar') {
-        await signIn(email, password)
-      } else {
-        await signUp(email, password)
-      }
+      await signIn(email, password)
     } catch (err) {
       setError(
-        err.code === 'auth/email-already-in-use'
-          ? 'Este e-mail já está cadastrado. Faça login.'
-          : err.code === 'auth/invalid-credential'
-            ? 'E-mail ou senha incorretos.'
-            : err.code === 'auth/weak-password'
-              ? 'Senha muito fraca (mínimo 6 caracteres).'
-              : 'Falha na autenticação.'
+        err.code === 'auth/invalid-credential'
+          ? 'E-mail ou senha incorretos.'
+          : 'Falha na autenticação.'
       )
     } finally {
       setBusy(false)
@@ -66,7 +57,7 @@ function LoginForm() {
 
   return (
     <form className="login" onSubmit={handleSubmit}>
-      <h2>{mode === 'entrar' ? 'Entrar' : 'Criar conta'}</h2>
+      <h2>Entrar</h2>
       <input
         type="email"
         required
@@ -81,29 +72,12 @@ function LoginForm() {
         value={password}
         onChange={(e) => setPassword(e.target.value)}
         placeholder="Senha"
-        autoComplete={mode === 'entrar' ? 'current-password' : 'new-password'}
+        autoComplete="current-password"
       />
       {error && <p className="warning">{error}</p>}
       <button type="submit" disabled={busy}>
-        {busy ? 'Aguarde…' : mode === 'entrar' ? 'Entrar' : 'Criar conta'}
+        {busy ? 'Aguarde…' : 'Entrar'}
       </button>
-      <p className="login-switch">
-        {mode === 'entrar' ? (
-          <>
-            Não tem conta?{' '}
-            <button type="button" className="link" onClick={() => setMode('criar')}>
-              Criar conta
-            </button>
-          </>
-        ) : (
-          <>
-            Já tem conta?{' '}
-            <button type="button" className="link" onClick={() => setMode('entrar')}>
-              Entrar
-            </button>
-          </>
-        )}
-      </p>
     </form>
   )
 }
@@ -275,7 +249,7 @@ function LocationEditor({ book }) {
   )
 }
 
-function FindView({ books, loading }) {
+function FindView({ books, loading, editable }) {
   const [filter, setFilter] = useState('')
 
   const filtered = useMemo(() => {
@@ -314,8 +288,14 @@ function FindView({ books, loading }) {
 
       {books.length === 0 && (
         <p className="hint">
-          Estante vazia. Vá na aba <strong>Adicionar</strong> para catalogar os
-          primeiros livros.
+          {editable ? (
+            <>
+              Estante vazia. Vá na aba <strong>Adicionar</strong> para catalogar
+              os primeiros livros.
+            </>
+          ) : (
+            'Estante vazia.'
+          )}
         </p>
       )}
 
@@ -324,10 +304,14 @@ function FindView({ books, loading }) {
           <Cover book={book} />
           <div className="book-info">
             <Meta book={book} />
-            <LocationEditor book={book} />
-            <button className="ghost danger" onClick={() => deleteBook(book.id)}>
-              Remover
-            </button>
+            {editable && (
+              <>
+                <LocationEditor book={book} />
+                <button className="ghost danger" onClick={() => deleteBook(book.id)}>
+                  Remover
+                </button>
+              </>
+            )}
           </div>
         </article>
       ))}
@@ -335,10 +319,13 @@ function FindView({ books, loading }) {
   )
 }
 
+const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL
+
 function App() {
   const [firebaseReady, setFirebaseReady] = useState(false)
   const [user, setUser] = useState(null)
   const [authLoading, setAuthLoading] = useState(true)
+  const [showLogin, setShowLogin] = useState(false)
   const [tab, setTab] = useState('encontrar')
   const [shelf, setShelf] = useState([])
   const [shelfLoading, setShelfLoading] = useState(false)
@@ -355,13 +342,14 @@ function App() {
     }
     const unsub = onAuthChange((u) => {
       setUser(u)
+      setShowLogin(false)
       setAuthLoading(false)
     })
     return unsub
   }, [])
 
   useEffect(() => {
-    if (!user) {
+    if (!firebaseReady) {
       setShelf([])
       return
     }
@@ -371,7 +359,7 @@ function App() {
       setShelfLoading(false)
     })
     return unsub
-  }, [user])
+  }, [firebaseReady])
 
   if (!firebaseReady) {
     return (
@@ -388,38 +376,45 @@ function App() {
 
   if (authLoading) return <p className="hint">Carregando…</p>
 
-  if (!user) {
-    return (
-      <div className="app">
-        <Header />
-        <LoginForm />
-      </div>
-    )
-  }
+  const isAdmin = !!user && user.email === ADMIN_EMAIL
 
   return (
     <div className="app">
       <Header>
-        <button className="ghost" onClick={signOut}>
-          Sair
-        </button>
+        {user ? (
+          <button className="ghost" onClick={signOut}>
+            Sair
+          </button>
+        ) : (
+          <button className="ghost" onClick={() => setShowLogin((v) => !v)}>
+            {showLogin ? 'Fechar' : 'Entrar'}
+          </button>
+        )}
       </Header>
-      <nav className="tabs">
-        <button
-          className={tab === 'encontrar' ? 'tab active' : 'tab'}
-          onClick={() => setTab('encontrar')}
-        >
-          Encontrar
-        </button>
-        <button
-          className={tab === 'adicionar' ? 'tab active' : 'tab'}
-          onClick={() => setTab('adicionar')}
-        >
-          Adicionar
-        </button>
-      </nav>
-      {tab === 'encontrar' ? (
-        <FindView books={shelf} loading={shelfLoading} />
+
+      {!user && showLogin && <LoginForm />}
+
+      {isAdmin && (
+        <nav className="tabs">
+          <button
+            className={tab === 'encontrar' ? 'tab active' : 'tab'}
+            onClick={() => setTab('encontrar')}
+          >
+            Encontrar
+          </button>
+          <button
+            className={tab === 'adicionar' ? 'tab active' : 'tab'}
+            onClick={() => setTab('adicionar')}
+          >
+            Adicionar
+          </button>
+        </nav>
+      )}
+
+      {!isAdmin ? (
+        <FindView books={shelf} loading={shelfLoading} editable={false} />
+      ) : tab === 'encontrar' ? (
+        <FindView books={shelf} loading={shelfLoading} editable />
       ) : (
         <SearchView lastLocation={lastLocation} onAdded={setLastLocation} />
       )}
