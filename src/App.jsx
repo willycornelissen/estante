@@ -84,6 +84,7 @@ function LoginForm() {
 
 function AddForm({ lastLocation, onSave, onCancel }) {
   const [location, setLocation] = useState(lastLocation || '')
+  const [tags, setTags] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
 
@@ -92,7 +93,13 @@ function AddForm({ lastLocation, onSave, onCancel }) {
     setBusy(true)
     setError(null)
     try {
-      await onSave(location)
+      await onSave({
+        location,
+        tags: tags
+          .split(',')
+          .map((t) => t.trim())
+          .filter(Boolean),
+      })
       onCancel()
     } catch (err) {
       setError(err.message)
@@ -108,6 +115,12 @@ function AddForm({ lastLocation, onSave, onCancel }) {
         onChange={(e) => setLocation(e.target.value)}
         placeholder="Ex.: Quarto 1 · Estante B · Prateleira 3"
         autoFocus
+      />
+      <p className="add-hint">Tags (separadas por vírgula)</p>
+      <input
+        value={tags}
+        onChange={(e) => setTags(e.target.value)}
+        placeholder="Ex.: ficção, sci-fi, favorito"
       />
       {error && <p className="warning">{error}</p>}
       <div className="add-actions">
@@ -142,7 +155,7 @@ function SearchView({ lastLocation, onAdded }) {
     setLoading(false)
   }
 
-  async function handleSave(book, location) {
+  async function handleSave(book, location, tags) {
     await addBook({
       title: book.title,
       subtitle: book.subtitle,
@@ -155,6 +168,7 @@ function SearchView({ lastLocation, onAdded }) {
       cover: book.cover,
       source: book.source,
       location,
+      tags,
     })
     onAdded(location)
   }
@@ -201,7 +215,7 @@ function SearchView({ lastLocation, onAdded }) {
               ) : (
                 <AddForm
                   lastLocation={lastLocation}
-                  onSave={(location) => handleSave(book, location)}
+                  onSave={({ location, tags }) => handleSave(book, location, tags)}
                   onCancel={() => setAddingIsbn(null)}
                 />
               )}
@@ -260,6 +274,7 @@ function FindView({ books, loading, editable }) {
         b.title?.toLowerCase().includes(q) ||
         b.authors?.some((a) => a.toLowerCase().includes(q)) ||
         (b.isbn || '').toLowerCase().includes(q) ||
+        b.tags?.some((t) => t.toLowerCase().includes(q)) ||
         b.location?.toLowerCase().includes(q)
     )
   }, [books, filter])
@@ -274,7 +289,7 @@ function FindView({ books, loading, editable }) {
           type="search"
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
-          placeholder="Buscar por título, autor, ISBN ou localização…"
+          placeholder="Buscar por título, autor, ISBN, tag ou localização…"
           autoFocus
         />
       </form>
@@ -304,6 +319,15 @@ function FindView({ books, loading, editable }) {
           <Cover book={book} />
           <div className="book-info">
             <Meta book={book} />
+            {book.tags?.length > 0 && (
+              <p className="book-tags">
+                {book.tags.map((tag) => (
+                  <span className="tag" key={tag}>
+                    {tag}
+                  </span>
+                ))}
+              </p>
+            )}
             {editable && (
               <>
                 <LocationEditor book={book} />

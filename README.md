@@ -53,6 +53,14 @@ os mesmos valores de `.env` como **Actions secrets/variables** do repositório
 
 Habilite GitHub Pages em **Settings > Pages** com source `GitHub Actions`.
 
+## Domínio próprio
+
+O site é servido em `estante.willy.dev.br` (raiz do domínio). Para isso o CI
+builda com `VITE_BASE='/'` e o arquivo `public/CNAME` (contendo o subdomínio)
+é incluído no deploy. No DNS, crie um CNAME do subdomínio
+`estante.willy.dev.br` apontando para `willycornelissen.github.io`; no
+**Settings > Pages**, cadastre o domínio e marque *Enforce HTTPS*.
+
 ## Estrutura
 
 - `src/lib/metadata.js` — busca de metadados (Google Books → OpenLibrary)
