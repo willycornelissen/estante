@@ -15,8 +15,11 @@ const booksCol = () => collection(db, 'books')
 
 export async function addBook(book) {
   const uid = auth.currentUser.uid
+  const data = Object.fromEntries(
+    Object.entries(book).filter(([, v]) => v !== undefined)
+  )
   await addDoc(booksCol(), {
-    ...book,
+    ...data,
     uid,
     status: 'na_estante',
     createdAt: serverTimestamp(),
