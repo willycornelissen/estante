@@ -64,6 +64,10 @@ body {
   cursor: wait;
 }
 
+.manual-form {
+  margin-bottom: 1.5rem;
+}
+
 .hint {
   color: #888;
   text-align: center;

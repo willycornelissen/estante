@@ -141,6 +141,77 @@ function AddForm({ lastLocation, onSave, onCancel }) {
   )
 }
 
+function ManualForm({ lastLocation, onSave, onCancel }) {
+  const [title, setTitle] = useState('')
+  const [author, setAuthor] = useState('')
+  const [location, setLocation] = useState(lastLocation || '')
+  const [tags, setTags] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState(null)
+
+  async function handleSubmit(e) {
+    e.preventDefault()
+    setBusy(true)
+    setError(null)
+    try {
+      await onSave({
+        title: title.trim(),
+        author: author.trim(),
+        location,
+        tags: tags
+          .split(',')
+          .map((t) => t.trim())
+          .filter(Boolean),
+      })
+      onCancel()
+    } catch (err) {
+      setError(err.message)
+      setBusy(false)
+    }
+  }
+
+  return (
+    <form className="add-form manual-form" onSubmit={handleSubmit}>
+      <p className="add-hint">Título *</p>
+      <input
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        placeholder="Título do livro"
+        required
+        autoFocus
+      />
+      <p className="add-hint">Autor *</p>
+      <input
+        value={author}
+        onChange={(e) => setAuthor(e.target.value)}
+        placeholder="Autor do livro"
+        required
+      />
+      <p className="add-hint">Onde ele está fisicamente?</p>
+      <input
+        value={location}
+        onChange={(e) => setLocation(e.target.value)}
+        placeholder="Ex.: Quarto 1 · Estante B · Prateleira 3"
+      />
+      <p className="add-hint">Tags (separadas por vírgula)</p>
+      <input
+        value={tags}
+        onChange={(e) => setTags(e.target.value)}
+        placeholder="Ex.: ficção, sci-fi, favorito"
+      />
+      {error && <p className="warning">{error}</p>}
+      <div className="add-actions">
+        <button type="submit" disabled={busy}>
+          {busy ? 'Salvando…' : 'Adicionar à estante'}
+        </button>
+        <button type="button" className="ghost" onClick={onCancel}>
+          Cancelar
+        </button>
+      </div>
+    </form>
+  )
+}
+
 function SearchView({ lastLocation, onAdded }) {
   const [query, setQuery] = useState('')
   const [items, setItems] = useState([])
@@ -148,6 +219,7 @@ function SearchView({ lastLocation, onAdded }) {
   const [warning, setWarning] = useState(null)
   const [searched, setSearched] = useState(false)
   const [addingIsbn, setAddingIsbn] = useState(null)
+  const [manualOpen, setManualOpen] = useState(false)
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -179,6 +251,16 @@ function SearchView({ lastLocation, onAdded }) {
     onAdded(location)
   }
 
+  async function handleManualSave(book) {
+    await addBook({
+      title: book.title,
+      authors: [book.author],
+      location: book.location,
+      tags: book.tags,
+    })
+    onAdded(book.location)
+  }
+
   return (
     <section>
       <form className="search" onSubmit={handleSubmit}>
@@ -192,7 +274,21 @@ function SearchView({ lastLocation, onAdded }) {
         <button type="submit" disabled={loading}>
           {loading ? 'Buscando…' : 'Buscar'}
         </button>
+        <button
+          type="button"
+          onClick={() => setManualOpen((v) => !v)}
+        >
+          {manualOpen ? 'Fechar' : 'Manual'}
+        </button>
       </form>
+
+      {manualOpen && (
+        <ManualForm
+          lastLocation={lastLocation}
+          onSave={handleManualSave}
+          onCancel={() => setManualOpen(false)}
+        />
+      )}
 
       {warning && <p className="warning">{warning}</p>}
 
