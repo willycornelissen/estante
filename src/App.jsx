@@ -212,7 +212,7 @@ function ManualForm({ lastLocation, onSave, onCancel }) {
   )
 }
 
-function SearchView({ lastLocation, onAdded }) {
+function SearchView({ lastLocation, onAdded, actions }) {
   const [query, setQuery] = useState('')
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(false)
@@ -263,6 +263,9 @@ function SearchView({ lastLocation, onAdded }) {
 
   return (
     <section>
+      <div className="find-head">
+        <div className="find-actions">{actions}</div>
+      </div>
       <form className="search" onSubmit={handleSubmit}>
         <input
           type="search"
@@ -410,7 +413,7 @@ function TagEditor({ book }) {
   )
 }
 
-function FindView({ books, loading, editable }) {
+function FindView({ books, loading, editable, actions }) {
   const [filter, setFilter] = useState('')
 
   const filtered = useMemo(() => {
@@ -430,7 +433,10 @@ function FindView({ books, loading, editable }) {
 
   return (
     <section className="find">
-      <h2 className="find-title">Onde está o livro?</h2>
+      <div className="find-head">
+        <h2 className="find-title">Onde está o livro?</h2>
+        <div className="find-actions">{actions}</div>
+      </div>
       <form className="search search-big" onSubmit={(e) => e.preventDefault()}>
         <input
           type="search"
@@ -546,7 +552,6 @@ function App() {
   if (!firebaseReady) {
     return (
       <div className="app">
-        <Header />
         <Hero />
         <p className="warning">
           Firebase não configurado: a busca de metadados funciona, mas salvar
@@ -561,23 +566,21 @@ function App() {
 
   const isAdmin = !!user && user.email === ADMIN_EMAIL
 
+  const authActions = user ? (
+    <>
+      <span className="header-user">{user.email}</span>
+      <button className="ghost" onClick={signOut}>
+        Sair
+      </button>
+    </>
+  ) : (
+    <button className="ghost" onClick={() => setShowLogin((v) => !v)}>
+      {showLogin ? 'Fechar' : 'Entrar'}
+    </button>
+  )
+
   return (
     <div className="app">
-      <Header>
-        {user ? (
-          <>
-            <span className="header-user">{user.email}</span>
-            <button className="ghost" onClick={signOut}>
-              Sair
-            </button>
-          </>
-        ) : (
-          <button className="ghost" onClick={() => setShowLogin((v) => !v)}>
-            {showLogin ? 'Fechar' : 'Entrar'}
-          </button>
-        )}
-      </Header>
-
       <Hero />
 
       {!user && showLogin && <LoginForm />}
@@ -600,25 +603,27 @@ function App() {
       )}
 
       {!isAdmin ? (
-        <FindView books={shelf} loading={shelfLoading} editable={false} />
+        <FindView
+          books={shelf}
+          loading={shelfLoading}
+          editable={false}
+          actions={authActions}
+        />
       ) : tab === 'encontrar' ? (
-        <FindView books={shelf} loading={shelfLoading} editable />
+        <FindView
+          books={shelf}
+          loading={shelfLoading}
+          editable
+          actions={authActions}
+        />
       ) : (
-        <SearchView lastLocation={lastLocation} onAdded={setLastLocation} />
+        <SearchView
+          lastLocation={lastLocation}
+          onAdded={setLastLocation}
+          actions={authActions}
+        />
       )}
     </div>
-  )
-}
-
-function Header({ children }) {
-  return (
-    <header className="header">
-      <div>
-        <h1>Estante</h1>
-        <p className="tagline">Willy Garabini Cornelissen</p>
-      </div>
-      {children}
-    </header>
   )
 }
 

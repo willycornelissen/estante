@@ -23,16 +23,6 @@ body {
   padding: 2rem 1rem 4rem;
 }
 
-.header h1 {
-  font-size: 2rem;
-  margin: 0;
-}
-
-.tagline {
-  margin: 0.25rem 0 0;
-  color: #888;
-}
-
 .search {
   display: flex;
   gap: 0.5rem;
@@ -167,13 +157,6 @@ body {
 .tag-source {
   background: #e3efe8;
   color: #2c5f4a;
-}
-
-.header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
 }
 
 .header-user {
@@ -417,9 +400,23 @@ body {
   font-weight: 400;
 }
 
+.find-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0 0 0.5rem;
+}
+
 .find-title {
   font-size: 1.6rem;
-  margin: 0 0 0.5rem;
+  margin: 0;
+}
+
+.find-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .search-big input {
