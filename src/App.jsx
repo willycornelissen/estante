@@ -383,13 +383,19 @@ function FindView({ books, loading, editable }) {
                 </p>
               )
             )}
+            {editable ? (
+              <LocationEditor book={book} />
+            ) : (
+              book.location && (
+                <p className="book-location">
+                  📍 <span className="location-value">{book.location}</span>
+                </p>
+              )
+            )}
             {editable && (
-              <>
-                <LocationEditor book={book} />
-                <button className="ghost danger" onClick={() => deleteBook(book.id)}>
-                  Remover
-                </button>
-              </>
+              <button className="ghost danger" onClick={() => deleteBook(book.id)}>
+                Remover
+              </button>
             )}
           </div>
         </article>
