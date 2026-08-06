@@ -38,6 +38,13 @@ export async function updateLocation(id, location) {
   })
 }
 
+export async function updateTags(id, tags) {
+  await updateDoc(doc(db, 'books', id), {
+    tags,
+    updatedAt: serverTimestamp(),
+  })
+}
+
 export async function deleteBook(id) {
   await deleteDoc(doc(db, 'books', id))
 }

@@ -2,7 +2,13 @@ import { useEffect, useMemo, useState } from 'react'
 import { searchBooks } from './lib/metadata'
 import { auth } from './lib/firebase'
 import { onAuthChange, signIn, signOut } from './lib/auth'
-import { addBook, deleteBook, subscribeBooks, updateLocation } from './lib/books'
+import {
+  addBook,
+  deleteBook,
+  subscribeBooks,
+  updateLocation,
+  updateTags,
+} from './lib/books'
 import './App.css'
 
 function Cover({ book }) {
@@ -263,6 +269,51 @@ function LocationEditor({ book }) {
   )
 }
 
+function TagEditor({ book }) {
+  const [editing, setEditing] = useState(false)
+  const [value, setValue] = useState((book.tags || []).join(', '))
+
+  async function handleSave(e) {
+    e.preventDefault()
+    await updateTags(
+      book.id,
+      value
+        .split(',')
+        .map((t) => t.trim())
+        .filter(Boolean)
+    )
+    setEditing(false)
+  }
+
+  if (!editing) {
+    return (
+      <p className="book-location">
+        🏷️{' '}
+        <span className="location-value">
+          {book.tags?.length > 0 ? book.tags.join(', ') : 'Sem tags'}
+        </span>
+        <button className="link" onClick={() => setEditing(true)}>
+          Editar
+        </button>
+      </p>
+    )
+  }
+  return (
+    <form className="location-edit" onSubmit={handleSave}>
+      <input
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        placeholder="Ex.: ficção, sci-fi, favorito"
+        autoFocus
+      />
+      <button type="submit">Salvar</button>
+      <button type="button" className="ghost" onClick={() => setEditing(false)}>
+        Cancelar
+      </button>
+    </form>
+  )
+}
+
 function FindView({ books, loading, editable }) {
   const [filter, setFilter] = useState('')
 
@@ -319,14 +370,18 @@ function FindView({ books, loading, editable }) {
           <Cover book={book} />
           <div className="book-info">
             <Meta book={book} />
-            {book.tags?.length > 0 && (
-              <p className="book-tags">
-                {book.tags.map((tag) => (
-                  <span className="tag" key={tag}>
-                    {tag}
-                  </span>
-                ))}
-              </p>
+            {editable ? (
+              <TagEditor book={book} />
+            ) : (
+              book.tags?.length > 0 && (
+                <p className="book-tags">
+                  {book.tags.map((tag) => (
+                    <span className="tag" key={tag}>
+                      {tag}
+                    </span>
+                  ))}
+                </p>
+              )
             )}
             {editable && (
               <>
