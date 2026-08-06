@@ -451,6 +451,7 @@ function App() {
     return (
       <div className="app">
         <Header />
+        <Hero />
         <p className="warning">
           Firebase não configurado: a busca de metadados funciona, mas salvar
           livros requer o `.env` preenchido.
@@ -480,6 +481,8 @@ function App() {
           </button>
         )}
       </Header>
+
+      <Hero />
 
       {!user && showLogin && <LoginForm />}
 
@@ -520,6 +523,28 @@ function Header({ children }) {
       </div>
       {children}
     </header>
+  )
+}
+
+function Hero() {
+  return (
+    <section className="hero">
+      <img
+        className="hero-bg"
+        src={`${import.meta.env.BASE_URL}hero-shelf.svg`}
+        alt=""
+      />
+      <div className="hero-content">
+        <p className="hero-label">Biblioteca pessoal</p>
+        <h2 className="hero-title">
+          Estante<span className="hero-dot">.</span>
+        </h2>
+        <p className="hero-tagline">
+          A biblioteca pessoal de{' '}
+          <strong>Willy Garabini Cornelissen</strong>
+        </p>
+      </div>
+    </section>
   )
 }
 
