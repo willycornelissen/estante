@@ -4,21 +4,44 @@
 
 | Skill | Descrição |
 |-------|-----------|
-| **coding-guidelines** | Diretrizes comportamentais para reduzir erros comuns de codificação em LLMs |
+| **code-review-skill** | Revisão de código estruturada para 20+ linguagens (React, Vue, Rust, TypeScript, etc.) |
 | **context7** | Busca documentação atualizada de bibliotecas e frameworks via API Context7 |
 | **docs-writer** | Escreve, revisa e edita arquivos de documentação com estrutura e tom consistentes |
 | **domain-analysis** | Mapeia domínios de negócio e sugere limites de serviços usando DDD Strategic Design |
 | **excalidraw-studio** | Gera diagramas Excalidraw a partir de descrições em linguagem natural |
 | **graphify** | Converte qualquer entrada (código, docs, imagens) em grafo de conhecimento com comunidades e HTML |
 | **mermaid-studio** | Criação, validação e renderização de diagramas Mermaid (SVG/PNG/ASCII) |
+| **modular-architecture** | Expert em arquitetura modular com bounded contexts, facades, isolamento de estado e 10 princípios de design |
 | **office-hours** | YC Office Hours: seis perguntas forçadas para startups ou brainstorming de design |
 | **skill-architect** | Guia para projetar e construir skills de alta qualidade do zero |
 | **spec-driven-eval** | Avalia o quão completamente uma implementação atende a um PRD/spec |
-| **tactical-ddd** | Detecta modelos de domínio anêmicos e refatora para modelos ricos com padrões DDD táticos |
 | **technical-design-doc-creator** | Cria Documentos de Design Técnico (TDD) abrangentes |
 | **tlc-spec-driven** | Planejamento e implementação de funcionalidades em 4 fases: Specify → Design → Tasks → Execute |
 
+## Frontend & Design Skills (`.opencode/skills/`)
+
+Documentação completa em [FRONTEND.md](FRONTEND.md).
+
+| Skill | Descrição |
+|-------|-----------|
+| **ui-ux-pro-max** | Inteligência de design UI/UX para web e mobile (estilos, paletas, fontes, UX, GSAP, gráficos) |
+| **design** | Design abrangente: logo (Gemini AI), identidade corporativa (CIP), ícones, apresentações, banners |
+| **ui-styling** | Interfaces com shadcn/ui (Radix + Tailwind), componentes acessíveis e visual canvas |
+| **design-system** | Arquitetura de tokens em 3 camadas, variáveis CSS, escalas e geração de slides |
+| **brand** | Identidade de marca: voz, guias visuais, gestão de ativos e sync com tokens |
+| **banner-design** | Banners multi-formato para redes sociais, anúncios, hero e impressão (22 estilos) |
+| **ai-artist** | Geração de imagens Nano Banana / Gemini com 129 prompts curados e 3 modos |
+| **ai-multimodal** | Processamento e geração de mídia via Gemini API (áudio, imagem, vídeo, PDF) |
+| **chrome-devtools** | Automação de browser e renderização visual com Puppeteer via CLI |
+| **frontend-design** | Interfaces frontend de alta qualidade em HTML/CSS |
+| **assets-organizing** | Convenções de organização de outputs em `assets/` por tópico, data e slug |
+| **slides** | Apresentações HTML estratégicas com Chart.js, design tokens e copywriting |
+
 ## Reversa Skills (`.agents/skills/`)
+
+Documentação completa em [LEGADO.md](LEGADO.md).
+
+O **Reversa** é um framework de engenharia reversa para descobrir, documentar e especificar sistemas legados em artefatos executáveis.
 
 | Skill | Descrição |
 |-------|-----------|
