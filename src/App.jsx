@@ -455,7 +455,7 @@ function Header({ children }) {
     <header className="header">
       <div>
         <h1>Estante</h1>
-        <p className="tagline">Minha biblioteca de livros físicos</p>
+        <p className="tagline">Willy Garabini Cornelissen</p>
       </div>
       {children}
     </header>
