@@ -447,3 +447,21 @@ body {
   background: #fff;
   color: inherit;
 }
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.pagination .ghost:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination-page {
+  color: #888;
+  font-size: 0.9rem;
+}

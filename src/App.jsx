@@ -413,8 +413,11 @@ function TagEditor({ book }) {
   )
 }
 
+const PAGE_SIZE = 20
+
 function FindView({ books, loading, editable, actions }) {
   const [filter, setFilter] = useState('')
+  const [page, setPage] = useState(1)
 
   const filtered = useMemo(() => {
     const q = filter.trim().toLowerCase()
@@ -429,7 +432,23 @@ function FindView({ books, loading, editable, actions }) {
     )
   }, [books, filter])
 
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const currentPage = Math.min(page, totalPages)
+
+  useEffect(() => {
+    setPage(1)
+  }, [filter])
+
+  function resetFilter() {
+    setFilter('')
+  }
+
   if (loading) return <p className="hint">Carregando estante…</p>
+
+  const pageItems = filtered.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE
+  )
 
   return (
     <section className="find">
@@ -467,7 +486,13 @@ function FindView({ books, loading, editable, actions }) {
         </p>
       )}
 
-      {filtered.map((book) => (
+      {filter.trim() && (
+        <button className="link" onClick={resetFilter}>
+          Limpar busca
+        </button>
+      )}
+
+      {pageItems.map((book) => (
         <article className="book-card" key={book.id}>
           <Cover book={book} />
           <div className="book-info">
@@ -502,6 +527,28 @@ function FindView({ books, loading, editable, actions }) {
           </div>
         </article>
       ))}
+
+      {totalPages > 1 && (
+        <nav className="pagination">
+          <button
+            className="ghost"
+            onClick={() => setPage(currentPage - 1)}
+            disabled={currentPage === 1}
+          >
+            ← Anterior
+          </button>
+          <span className="pagination-page">
+            Página {currentPage} de {totalPages}
+          </span>
+          <button
+            className="ghost"
+            onClick={() => setPage(currentPage + 1)}
+            disabled={currentPage === totalPages}
+          >
+            Próxima →
+          </button>
+        </nav>
+      )}
     </section>
   )
 }
