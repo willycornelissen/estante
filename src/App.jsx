@@ -506,6 +506,110 @@ function FindView({ books, loading, editable, actions }) {
   )
 }
 
+function csvCell(value) {
+  const s = Array.isArray(value) ? value.join('; ') : value
+  if (s == null) return ''
+  const str = String(s)
+  return /[",\n\r]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str
+}
+
+function buildCsv(books) {
+  const headers = [
+    'titulo',
+    'subtitulo',
+    'autores',
+    'editora',
+    'data_publicacao',
+    'isbn',
+    'paginas',
+    'idioma',
+    'fonte',
+    'localizacao',
+    'tags',
+    'status',
+  ]
+  const rows = books.map((b) =>
+    headers
+      .map((h) => {
+        switch (h) {
+          case 'titulo':
+            return csvCell(b.title)
+          case 'subtitulo':
+            return csvCell(b.subtitle)
+          case 'autores':
+            return csvCell(b.authors)
+          case 'editora':
+            return csvCell(b.publisher)
+          case 'data_publicacao':
+            return csvCell(b.publishedDate)
+          case 'isbn':
+            return csvCell(b.isbn)
+          case 'paginas':
+            return csvCell(b.pageCount)
+          case 'idioma':
+            return csvCell(b.language)
+          case 'fonte':
+            return csvCell(b.source)
+          case 'localizacao':
+            return csvCell(b.location)
+          case 'tags':
+            return csvCell(b.tags)
+          case 'status':
+            return csvCell(b.status)
+          default:
+            return ''
+        }
+      })
+      .join(',')
+  )
+  return [headers.join(','), ...rows]
+    .join('\n')
+    .replace(/^\uFEFF/, '')
+}
+
+function ExportView({ books, loading }) {
+  const [done, setDone] = useState(false)
+
+  function handleDownload() {
+    const csv = buildCsv(books)
+    const blob = new Blob(['\uFEFF' + csv], {
+      type: 'text/csv;charset=utf-8;',
+    })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `estante-${new Date().toISOString().slice(0, 10)}.csv`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+    setDone(true)
+  }
+
+  if (loading) return <p className="hint">Carregando estante…</p>
+
+  return (
+    <section className="export">
+      <h2 className="find-title">Exportar estante</h2>
+      <p className="add-hint">
+        Gera um arquivo CSV com todos os {books.length}
+        {books.length === 1 ? ' livro ' : ' livros '}
+        catalogados.
+      </p>
+      <button
+        className="add-btn"
+        onClick={handleDownload}
+        disabled={books.length === 0}
+      >
+        Baixar CSV
+      </button>
+      {books.length > 0 && done && (
+        <p className="hint done">Arquivo CSV gerado e baixado.</p>
+      )}
+    </section>
+  )
+}
+
 const ADMIN_EMAIL =
   import.meta.env.VITE_ADMIN_EMAIL || 'willy.cornelissen@gmail.com'
 
@@ -599,6 +703,12 @@ function App() {
           >
             Adicionar
           </button>
+          <button
+            className={tab === 'exportar' ? 'tab active' : 'tab'}
+            onClick={() => setTab('exportar')}
+          >
+            Exportar
+          </button>
         </nav>
       )}
 
@@ -616,6 +726,8 @@ function App() {
           editable
           actions={authActions}
         />
+      ) : tab === 'exportar' ? (
+        <ExportView books={shelf} loading={shelfLoading} />
       ) : (
         <SearchView
           lastLocation={lastLocation}
