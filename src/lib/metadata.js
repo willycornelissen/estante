@@ -148,25 +148,10 @@ export async function searchBooks(query) {
   if (isbn.length === 10 || isbn.length === 13) {
     const br = await searchBrasilApi(trimmed)
     if (br.ok && br.items.length > 0) return { items: br.items, warning: null }
-
-    const issues = [gb.reason, ol.reason, br.reason]
-      .filter(Boolean)
-      .filter((r) => r !== 'sem resultados' && r !== 'não é um ISBN')
-    return {
-      items: [],
-      warning: issues.length
-        ? `Buscas falharam (${issues.join('; ')})`
-        : 'Não foi encontrado nenhum livro.',
-    }
   }
 
-  const issues = [gb.reason, ol.reason]
-    .filter(Boolean)
-    .filter((r) => r !== 'sem resultados')
   return {
     items: [],
-    warning: issues.length
-      ? `Buscas falharam (${issues.join('; ')})`
-      : 'Não foi encontrado nenhum livro.',
+    warning: 'Não foi encontrado nenhum livro.',
   }
 }
