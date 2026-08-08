@@ -71,6 +71,40 @@ async function searchOpenLibrary(query) {
   return { ok: true, items: (data.docs || []).map(mapOpenLibrary) }
 }
 
+function mapBrasilApi(item) {
+  return {
+    source: 'brasilapi',
+    title: item.title,
+    subtitle: item.subtitle || null,
+    authors: item.authors || [],
+    publisher: item.publisher || null,
+    publishedDate: item.year ? String(item.year) : null,
+    isbn: item.isbn || null,
+    pageCount: item.page_count || null,
+    categories: item.subjects || [],
+    language: 'pt',
+    cover: item.cover_url
+      ? {
+          small: item.cover_url,
+          medium: item.cover_url,
+          large: item.cover_url,
+        }
+      : null,
+  }
+}
+
+async function searchBrasilApi(query) {
+  const isbn = query.replace(/[^0-9Xx]/g, '')
+  if (isbn.length !== 10 && isbn.length !== 13) {
+    return { ok: false, reason: 'não é um ISBN', items: [] }
+  }
+  const url = `https://brasilapi.com.br/api/isbn/v1/${isbn}`
+  const res = await fetch(url)
+  if (!res.ok) return { ok: false, reason: `http-${res.status}`, items: [] }
+  const data = await res.json()
+  return { ok: true, items: [mapBrasilApi(data)] }
+}
+
 export async function searchBooks(query) {
   const trimmed = (query || '').trim()
   if (!trimmed) return { items: [], warning: null }
@@ -81,7 +115,25 @@ export async function searchBooks(query) {
   const ol = await searchOpenLibrary(trimmed)
   if (ol.ok && ol.items.length > 0) return { items: ol.items, warning: null }
 
-  const issues = [gb.reason, ol.reason].filter(Boolean).filter((r) => r !== 'sem resultados')
+  const isbn = trimmed.replace(/[^0-9Xx]/g, '')
+  if (isbn.length === 10 || isbn.length === 13) {
+    const br = await searchBrasilApi(trimmed)
+    if (br.ok && br.items.length > 0) return { items: br.items, warning: null }
+
+    const issues = [gb.reason, ol.reason, br.reason]
+      .filter(Boolean)
+      .filter((r) => r !== 'sem resultados' && r !== 'não é um ISBN')
+    return {
+      items: [],
+      warning: issues.length
+        ? `Buscas falharam (${issues.join('; ')})`
+        : 'Nenhum resultado encontrado.',
+    }
+  }
+
+  const issues = [gb.reason, ol.reason]
+    .filter(Boolean)
+    .filter((r) => r !== 'sem resultados')
   return {
     items: [],
     warning: issues.length
