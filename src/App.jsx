@@ -380,7 +380,7 @@ function SearchView({ lastLocation, onAdded, actions }) {
                 </button>
               ) : (
                 <AddForm
-                  lastLocation={lastLocation}
+                  lastLocation=""
                   onSave={({ location, tags }) => handleSave(book, location, tags)}
                   onCancel={() => setAddingIsbn(null)}
                 />
