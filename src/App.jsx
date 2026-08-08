@@ -360,7 +360,7 @@ function SearchView({ lastLocation, onAdded, actions }) {
         <p className="hint">Digite um título ou autor e busque os metadados.</p>
       )}
       {searched && !loading && items.length === 0 && !warning && (
-        <p className="hint">Nenhum resultado.</p>
+        <p className="hint">Não foi encontrado nenhum livro.</p>
       )}
 
       {items.map((book, i) => {

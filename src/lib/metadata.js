@@ -156,7 +156,7 @@ export async function searchBooks(query) {
       items: [],
       warning: issues.length
         ? `Buscas falharam (${issues.join('; ')})`
-        : 'Nenhum resultado encontrado.',
+        : 'Não foi encontrado nenhum livro.',
     }
   }
 
@@ -167,6 +167,6 @@ export async function searchBooks(query) {
     items: [],
     warning: issues.length
       ? `Buscas falharam (${issues.join('; ')})`
-      : 'Nenhum resultado encontrado.',
+      : 'Não foi encontrado nenhum livro.',
   }
 }
