@@ -73,6 +73,22 @@ async function searchOpenLibrary(query) {
 
 function mapBrasilApi(item) {
   const cleanIsbn = item.isbn ? item.isbn.replace(/[^0-9Xx]/g, '') : null
+  
+  // Calcula o ISBN-10 para a Amazon
+  let isbn10 = null
+  if (cleanIsbn) {
+    if (cleanIsbn.length === 10) {
+      isbn10 = cleanIsbn
+    } else if (cleanIsbn.length === 13 && cleanIsbn.startsWith('978')) {
+      const core = cleanIsbn.slice(3, 12)
+      let sum = 0
+      for (let i = 0; i < 9; i++) sum += (10 - i) * Number(core[i])
+      const rem = sum % 11
+      const check = rem === 0 ? '0' : rem === 1 ? 'X' : String(11 - rem)
+      isbn10 = core + check
+    }
+  }
+
   return {
     source: 'brasilapi',
     title: item.title,
@@ -90,13 +106,19 @@ function mapBrasilApi(item) {
           medium: item.cover_url,
           large: item.cover_url,
         }
-      : (cleanIsbn
+      : (isbn10
           ? {
-              small: `https://books.google.com/books/content?vid=ISBN${cleanIsbn}&printsec=frontcover&img=1&zoom=1`,
-              medium: `https://books.google.com/books/content?vid=ISBN${cleanIsbn}&printsec=frontcover&img=1&zoom=1`,
-              large: `https://books.google.com/books/content?vid=ISBN${cleanIsbn}&printsec=frontcover&img=1&zoom=2`,
+              small: `https://images-na.ssl-images-amazon.com/images/P/${isbn10}.01.LZZZZZZZ.jpg`,
+              medium: `https://images-na.ssl-images-amazon.com/images/P/${isbn10}.01.LZZZZZZZ.jpg`,
+              large: `https://images-na.ssl-images-amazon.com/images/P/${isbn10}.01.LZZZZZZZ.jpg`,
             }
-          : null),
+          : (cleanIsbn
+              ? {
+                  small: `https://books.google.com/books/content?vid=ISBN${cleanIsbn}&printsec=frontcover&img=1&zoom=1`,
+                  medium: `https://books.google.com/books/content?vid=ISBN${cleanIsbn}&printsec=frontcover&img=1&zoom=1`,
+                  large: `https://books.google.com/books/content?vid=ISBN${cleanIsbn}&printsec=frontcover&img=1&zoom=2`,
+                }
+              : null)),
   }
 }
 

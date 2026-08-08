@@ -13,15 +13,69 @@ import './App.css'
 
 function Cover({ book }) {
   const cleanIsbn = book.isbn ? book.isbn.replace(/[^0-9Xx]/g, '') : null
-  const cover =
-    book.cover?.medium ||
-    book.cover?.small ||
-    (cleanIsbn
-      ? `https://books.google.com/books/content?vid=ISBN${cleanIsbn}&printsec=frontcover&img=1&zoom=1`
-      : null)
 
-  return cover ? (
-    <img className="book-cover" src={cover} alt="" loading="lazy" />
+  // Calcula o ISBN-10 para a Amazon
+  const isbn10 = useMemo(() => {
+    if (!cleanIsbn) return null
+    if (cleanIsbn.length === 10) return cleanIsbn
+    if (cleanIsbn.length === 13 && cleanIsbn.startsWith('978')) {
+      const core = cleanIsbn.slice(3, 12)
+      let sum = 0
+      for (let i = 0; i < 9; i++) sum += (10 - i) * Number(core[i])
+      const rem = sum % 11
+      const check = rem === 0 ? '0' : rem === 1 ? 'X' : String(11 - rem)
+      return core + check
+    }
+    return null
+  }, [cleanIsbn])
+
+  const amazonUrl = isbn10
+    ? `https://images-na.ssl-images-amazon.com/images/P/${isbn10}.01.LZZZZZZZ.jpg`
+    : null
+
+  const googleUrl = cleanIsbn
+    ? `https://books.google.com/books/content?vid=ISBN${cleanIsbn}&printsec=frontcover&img=1&zoom=1`
+    : null
+
+  // Estado que armazena a URL ativa da capa
+  const [src, setSrc] = useState(book.cover?.medium || book.cover?.small || amazonUrl || googleUrl)
+
+  // Sincroniza o src caso as propriedades mudem
+  useEffect(() => {
+    setSrc(book.cover?.medium || book.cover?.small || amazonUrl || googleUrl)
+  }, [book.cover, amazonUrl, googleUrl])
+
+  // Lida com falhas de carregamento ou imagens vazias
+  function handleImageError() {
+    if (src === amazonUrl && googleUrl) {
+      setSrc(googleUrl)
+    } else {
+      setSrc(null)
+    }
+  }
+
+  // Verifica se a imagem carregada da Amazon é o GIF transparente de 1x1 pixel (que tem largura 1 e altura 1)
+  function handleImageLoad(e) {
+    const img = e.target
+    if (src === amazonUrl && img.naturalWidth === 1 && img.naturalHeight === 1) {
+      // Se for a imagem padrão transparente de 1x1 da Amazon, muda para o Google Books
+      if (googleUrl) {
+        setSrc(googleUrl)
+      } else {
+        setSrc(null)
+      }
+    }
+  }
+
+  return src ? (
+    <img
+      className="book-cover"
+      src={src}
+      alt=""
+      loading="lazy"
+      onLoad={handleImageLoad}
+      onError={handleImageError}
+    />
   ) : (
     <div className="book-cover book-cover-placeholder">Sem capa</div>
   )
