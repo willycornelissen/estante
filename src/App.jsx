@@ -273,7 +273,7 @@ function ManualForm({ lastLocation, onSave, onCancel }) {
   )
 }
 
-function SearchView({ lastLocation, onAdded, actions }) {
+function SearchView({ onAdded, actions }) {
   const [query, setQuery] = useState('')
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(false)
@@ -348,7 +348,7 @@ function SearchView({ lastLocation, onAdded, actions }) {
 
       {manualOpen && (
         <ManualForm
-          lastLocation={lastLocation}
+          lastLocation=""
           onSave={handleManualSave}
           onCancel={() => setManualOpen(false)}
         />
@@ -729,7 +729,7 @@ function App() {
   const [tab, setTab] = useState('encontrar')
   const [shelf, setShelf] = useState([])
   const [shelfLoading, setShelfLoading] = useState(false)
-  const [lastLocation, setLastLocation] = useState('')
+  const [, setLastLocation] = useState('')
 
   useEffect(() => {
     setFirebaseReady(!!auth)
@@ -838,7 +838,6 @@ function App() {
         <ExportView books={shelf} loading={shelfLoading} />
       ) : (
         <SearchView
-          lastLocation={lastLocation}
           onAdded={setLastLocation}
           actions={authActions}
         />
