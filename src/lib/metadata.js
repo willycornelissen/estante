@@ -72,6 +72,7 @@ async function searchOpenLibrary(query) {
 }
 
 function mapBrasilApi(item) {
+  const cleanIsbn = item.isbn ? item.isbn.replace(/[^0-9Xx]/g, '') : null
   return {
     source: 'brasilapi',
     title: item.title,
@@ -89,7 +90,13 @@ function mapBrasilApi(item) {
           medium: item.cover_url,
           large: item.cover_url,
         }
-      : null,
+      : (cleanIsbn
+          ? {
+              small: `https://books.google.com/books/content?vid=ISBN${cleanIsbn}&printsec=frontcover&img=1&zoom=1`,
+              medium: `https://books.google.com/books/content?vid=ISBN${cleanIsbn}&printsec=frontcover&img=1&zoom=1`,
+              large: `https://books.google.com/books/content?vid=ISBN${cleanIsbn}&printsec=frontcover&img=1&zoom=2`,
+            }
+          : null),
   }
 }
 

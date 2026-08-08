@@ -12,7 +12,14 @@ import {
 import './App.css'
 
 function Cover({ book }) {
-  const cover = book.cover?.medium || book.cover?.small
+  const cleanIsbn = book.isbn ? book.isbn.replace(/[^0-9Xx]/g, '') : null
+  const cover =
+    book.cover?.medium ||
+    book.cover?.small ||
+    (cleanIsbn
+      ? `https://books.google.com/books/content?vid=ISBN${cleanIsbn}&printsec=frontcover&img=1&zoom=1`
+      : null)
+
   return cover ? (
     <img className="book-cover" src={cover} alt="" loading="lazy" />
   ) : (
