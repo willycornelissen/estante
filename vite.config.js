@@ -10,5 +10,5 @@ const hasCname = fs.existsSync(path.resolve(__dirname, 'public/CNAME'))
 // base: caminho do repositório no GitHub Pages. Ajuste se o nome do repo mudar.
 export default defineConfig({
   plugins: [react()],
-  base: process.env.VITE_BASE || (hasCname ? '/' : '/estante/'),
+  base: hasCname ? '/' : (process.env.VITE_BASE || '/estante/'),
 })
