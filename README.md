@@ -1,6 +1,6 @@
 # Estante
 
-Gerenciador da biblioteca pessoal de 600+ livros físicos.
+Gerenciador da biblioteca pessoal de livros físicos.
 
 - **Frontend:** React + Vite
 - **Hospedagem:** GitHub Pages
