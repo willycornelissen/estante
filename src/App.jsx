@@ -11,7 +11,7 @@ import {
 } from './lib/books'
 import './App.css'
 
-function Cover({ book }) {
+function Cover({ book, onClick }) {
   const cleanIsbn = book.isbn ? book.isbn.replace(/[^0-9Xx]/g, '') : null
 
   // Calcula o ISBN-10 para a Amazon
@@ -75,16 +75,30 @@ function Cover({ book }) {
       loading="lazy"
       onLoad={handleImageLoad}
       onError={handleImageError}
+      onClick={onClick}
+      style={{ cursor: onClick ? 'pointer' : 'default' }}
     />
   ) : (
-    <div className="book-cover book-cover-placeholder">Sem capa</div>
+    <div
+      className="book-cover book-cover-placeholder"
+      onClick={onClick}
+      style={{ cursor: onClick ? 'pointer' : 'default' }}
+    >
+      Sem capa
+    </div>
   )
 }
 
-function Meta({ book }) {
+function Meta({ book, onTitleClick }) {
   return (
     <>
-      <h3 className="book-title">{book.title}</h3>
+      <h3
+        className="book-title"
+        onClick={onTitleClick}
+        style={{ cursor: onTitleClick ? 'pointer' : 'default' }}
+      >
+        {book.title}
+      </h3>
       {book.subtitle && <p className="book-subtitle">{book.subtitle}</p>}
       {book.authors.length > 0 && (
         <p className="book-authors">{book.authors.join(', ')}</p>
@@ -96,6 +110,168 @@ function Meta({ book }) {
       </p>
       {book.isbn && <p className="book-meta">ISBN {book.isbn}</p>}
     </>
+  )
+}
+
+function BookDetailsModal({ book, onClose }) {
+  const cleanIsbn = book.isbn ? book.isbn.replace(/[^0-9Xx]/g, '') : null
+
+  // Calcula o ISBN-10 para a Amazon
+  const isbn10 = useMemo(() => {
+    if (!cleanIsbn) return null
+    if (cleanIsbn.length === 10) return cleanIsbn
+    if (cleanIsbn.length === 13 && cleanIsbn.startsWith('978')) {
+      const core = cleanIsbn.slice(3, 12)
+      let sum = 0
+      for (let i = 0; i < 9; i++) sum += (10 - i) * Number(core[i])
+      const rem = sum % 11
+      const check = rem === 0 ? '0' : rem === 1 ? 'X' : String(11 - rem)
+      return core + check
+    }
+    return null
+  }, [cleanIsbn])
+
+  const amazonUrl = isbn10
+    ? `https://images-na.ssl-images-amazon.com/images/P/${isbn10}.01.LZZZZZZZ.jpg`
+    : null
+
+  const googleUrl = cleanIsbn
+    ? `https://books.google.com/books/content?vid=ISBN${cleanIsbn}&printsec=frontcover&img=1&zoom=1`
+    : null
+
+  const [src, setSrc] = useState(book.cover?.large || book.cover?.medium || book.cover?.small || amazonUrl || googleUrl)
+
+  useEffect(() => {
+    setSrc(book.cover?.large || book.cover?.medium || book.cover?.small || amazonUrl || googleUrl)
+  }, [book.cover, amazonUrl, googleUrl])
+
+  function handleImageError() {
+    if (src === amazonUrl && googleUrl) {
+      setSrc(googleUrl)
+    } else {
+      setSrc(null)
+    }
+  }
+
+  function handleImageLoad(e) {
+    const img = e.target
+    if (src === amazonUrl && img.naturalWidth === 1 && img.naturalHeight === 1) {
+      if (googleUrl) {
+        setSrc(googleUrl)
+      } else {
+        setSrc(null)
+      }
+    }
+  }
+
+  function handleContainerClick(e) {
+    e.stopPropagation()
+  }
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={handleContainerClick}>
+        <button className="modal-close" onClick={onClose}>
+          &times;
+        </button>
+        <div className="modal-body">
+          <div className="modal-left">
+            {src ? (
+              <img
+                className="modal-cover"
+                src={src}
+                alt={book.title}
+                onLoad={handleImageLoad}
+                onError={handleImageError}
+              />
+            ) : (
+              <div className="modal-cover modal-cover-placeholder">Sem capa</div>
+            )}
+          </div>
+          <div className="modal-right">
+            <h2 className="modal-title">{book.title}</h2>
+            {book.subtitle && <h4 className="modal-subtitle">{book.subtitle}</h4>}
+
+            {book.authors?.length > 0 && (
+              <p className="modal-authors">
+                <strong>Autor(es):</strong> {book.authors.join(', ')}
+              </p>
+            )}
+
+            <div className="modal-grid">
+              {book.publisher && (
+                <p>
+                  <strong>Editora:</strong> {book.publisher}
+                </p>
+              )}
+              {book.publishedDate && (
+                <p>
+                  <strong>Publicação:</strong> {book.publishedDate}
+                </p>
+              )}
+              {book.isbn && (
+                <p>
+                  <strong>ISBN:</strong> {book.isbn}
+                </p>
+              )}
+              {book.pageCount && (
+                <p>
+                  <strong>Páginas:</strong> {book.pageCount}
+                </p>
+              )}
+              {book.language && (
+                <p>
+                  <strong>Idioma:</strong> {book.language.toUpperCase()}
+                </p>
+              )}
+              {book.source && (
+                <p>
+                  <strong>Fonte dos Dados:</strong> {book.source.toUpperCase()}
+                </p>
+              )}
+              {book.location && (
+                <p className="modal-highlight">
+                  <strong>📍 Localização:</strong> {book.location}
+                </p>
+              )}
+            </div>
+
+            {book.categories?.length > 0 && (
+              <div className="modal-categories">
+                <strong>Categorias:</strong>
+                <div className="modal-tag-list">
+                  {book.categories.map((cat) => (
+                    <span className="modal-tag" key={cat}>
+                      {cat}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {book.tags?.length > 0 && (
+              <div className="modal-categories">
+                <strong>Tags na Estante:</strong>
+                <div className="modal-tag-list">
+                  {book.tags.map((tag) => (
+                    <span className="modal-tag shelf-tag" key={tag}>
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {book.description && (
+              <div className="modal-description">
+                <strong>Sinopse / Descrição:</strong>
+                <p>{book.description}</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
   )
 }
 
@@ -273,7 +449,7 @@ function ManualForm({ lastLocation, onSave, onCancel }) {
   )
 }
 
-function SearchView({ onAdded, actions }) {
+function SearchView({ onAdded, actions, onShowDetails }) {
   const [query, setQuery] = useState('')
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(false)
@@ -368,9 +544,9 @@ function SearchView({ onAdded, actions }) {
         const isAdding = addingIsbn === key
         return (
           <article className="book-card" key={key}>
-            <Cover book={book} />
+            <Cover book={book} onClick={() => onShowDetails(book)} />
             <div className="book-info">
-              <Meta book={book} />
+              <Meta book={book} onTitleClick={() => onShowDetails(book)} />
               {!isAdding ? (
                 <button
                   className="add-btn"
@@ -476,7 +652,7 @@ function TagEditor({ book }) {
 
 const PAGE_SIZE = 20
 
-function FindView({ books, loading, editable, actions }) {
+function FindView({ books, loading, editable, actions, onShowDetails }) {
   const [filter, setFilter] = useState('')
   const [page, setPage] = useState(1)
 
@@ -555,9 +731,9 @@ function FindView({ books, loading, editable, actions }) {
 
       {pageItems.map((book) => (
         <article className="book-card" key={book.id}>
-          <Cover book={book} />
+          <Cover book={book} onClick={() => onShowDetails(book)} />
           <div className="book-info">
-            <Meta book={book} />
+            <Meta book={book} onTitleClick={() => onShowDetails(book)} />
             {editable ? (
               <TagEditor book={book} />
             ) : (
@@ -730,6 +906,7 @@ function App() {
   const [shelf, setShelf] = useState([])
   const [shelfLoading, setShelfLoading] = useState(false)
   const [, setLastLocation] = useState('')
+  const [selectedBook, setSelectedBook] = useState(null)
 
   useEffect(() => {
     setFirebaseReady(!!auth)
@@ -769,7 +946,13 @@ function App() {
           Firebase não configurado: a busca de metadados funciona, mas salvar
           livros requer o `.env` preenchido.
         </p>
-        <SearchOnly />
+        <SearchOnly onShowDetails={setSelectedBook} />
+        {selectedBook && (
+          <BookDetailsModal
+            book={selectedBook}
+            onClose={() => setSelectedBook(null)}
+          />
+        )}
       </div>
     )
   }
@@ -826,6 +1009,7 @@ function App() {
           loading={shelfLoading}
           editable={false}
           actions={authActions}
+          onShowDetails={setSelectedBook}
         />
       ) : tab === 'encontrar' ? (
         <FindView
@@ -833,6 +1017,7 @@ function App() {
           loading={shelfLoading}
           editable
           actions={authActions}
+          onShowDetails={setSelectedBook}
         />
       ) : tab === 'exportar' ? (
         <ExportView books={shelf} loading={shelfLoading} />
@@ -840,6 +1025,13 @@ function App() {
         <SearchView
           onAdded={setLastLocation}
           actions={authActions}
+          onShowDetails={setSelectedBook}
+        />
+      )}
+      {selectedBook && (
+        <BookDetailsModal
+          book={selectedBook}
+          onClose={() => setSelectedBook(null)}
         />
       )}
     </div>
@@ -868,7 +1060,7 @@ function Hero() {
   )
 }
 
-function SearchOnly() {
+function SearchOnly({ onShowDetails }) {
   const [query, setQuery] = useState('')
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(false)
@@ -902,9 +1094,9 @@ function SearchOnly() {
       {warning && <p className="warning">{warning}</p>}
       {items.map((book, i) => (
         <article className="book-card" key={`${book.source}-${i}`}>
-          <Cover book={book} />
+          <Cover book={book} onClick={() => onShowDetails(book)} />
           <div className="book-info">
-            <Meta book={book} />
+            <Meta book={book} onTitleClick={() => onShowDetails(book)} />
           </div>
         </article>
       ))}

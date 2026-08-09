@@ -465,3 +465,260 @@ body {
   color: #888;
   font-size: 0.9rem;
 }
+
+/* Estilos para o Modal de Detalhes do Livro */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 20px;
+  backdrop-filter: blur(4px);
+}
+
+.modal-content {
+  background: #fff;
+  border-radius: 12px;
+  max-width: 800px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  animation: modal-fadeIn 0.2s ease-out;
+}
+
+@keyframes modal-fadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.modal-close {
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  background: none;
+  border: none;
+  font-size: 28px;
+  cursor: pointer;
+  color: #666;
+  transition: color 0.2s;
+  line-height: 1;
+}
+
+.modal-close:hover {
+  color: #000;
+}
+
+.modal-body {
+  display: flex;
+  gap: 30px;
+  padding: 40px;
+}
+
+@media (max-width: 600px) {
+  .modal-body {
+    flex-direction: column;
+    padding: 30px 20px;
+    gap: 20px;
+  }
+}
+
+.modal-left {
+  flex: 0 0 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.modal-cover {
+  width: 100%;
+  max-width: 200px;
+  border-radius: 6px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+  object-fit: cover;
+}
+
+.modal-cover-placeholder {
+  width: 150px;
+  height: 220px;
+  background: #eee;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 6px;
+  font-weight: bold;
+  color: #888;
+  border: 1px dashed #ccc;
+}
+
+.modal-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.modal-title {
+  margin: 0;
+  font-size: 24px;
+  color: #111;
+  line-height: 1.2;
+}
+
+.modal-subtitle {
+  margin: -5px 0 0 0;
+  font-size: 16px;
+  color: #666;
+  font-weight: normal;
+}
+
+.modal-authors {
+  font-size: 16px;
+  margin: 0;
+}
+
+.modal-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.modal-grid p {
+  margin: 0;
+}
+
+.modal-highlight {
+  grid-column: 1 / -1;
+  background: #e9f5ff;
+  padding: 6px 10px;
+  border-radius: 4px;
+  color: #004085;
+}
+
+.modal-categories {
+  font-size: 14px;
+}
+
+.modal-tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.modal-tag {
+  background: #e2e3e5;
+  color: #383d41;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.modal-tag.shelf-tag {
+  background: #d4edda;
+  color: #155724;
+}
+
+.modal-description {
+  font-size: 14px;
+  line-height: 1.6;
+  border-top: 1px solid #eee;
+  padding-top: 15px;
+  margin-top: 10px;
+}
+
+.modal-description p {
+  margin: 6px 0 0 0;
+  color: #444;
+  white-space: pre-line;
+}
+
+/* Cursores e Efeitos para Itens Clicáveis */
+.book-title {
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.book-title:hover {
+  text-decoration: underline;
+  color: #2c5f4a !important;
+}
+
+.book-cover {
+  cursor: pointer;
+  transition: transform 0.2s, opacity 0.2s;
+}
+
+.book-cover:hover {
+  transform: translateY(-3px);
+  opacity: 0.9;
+}
+
+/* Modo Escuro para o Modal */
+@media (prefers-color-scheme: dark) {
+  .modal-content {
+    background: #1c1a17;
+    color: #e7e5e4;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  }
+  
+  .modal-title {
+    color: #f5f5f4;
+  }
+  
+  .modal-subtitle {
+    color: #a8a29e;
+  }
+  
+  .modal-close {
+    color: #a8a29e;
+  }
+  
+  .modal-close:hover {
+    color: #f5f5f4;
+  }
+  
+  .modal-grid {
+    background: #292524;
+  }
+  
+  .modal-highlight {
+    background: #1c2d26;
+    color: #a3cfbb;
+  }
+  
+  .modal-tag {
+    background: #44403c;
+    color: #e7e5e4;
+  }
+  
+  .modal-tag.shelf-tag {
+    background: #1d3326;
+    color: #a3cfbb;
+  }
+  
+  .modal-description {
+    border-top-color: #292524;
+  }
+  
+  .modal-description p {
+    color: #d6d3d1;
+  }
+  
+  .modal-cover-placeholder {
+    background: #292524;
+    border-color: #44403c;
+    color: #78716c;
+  }
+}

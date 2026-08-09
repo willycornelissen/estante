@@ -22,6 +22,7 @@ function mapGoogle(item) {
     pageCount: v.pageCount,
     categories: v.categories || [],
     language: v.language,
+    description: v.description || null,
     cover: {
       small: img.smallThumbnail || img.thumbnail || null,
       medium: img.thumbnail || img.smallThumbnail || null,
@@ -43,6 +44,7 @@ function mapOpenLibrary(doc) {
     pageCount: doc.number_of_pages_median,
     categories: subjects.slice(0, 3),
     language: (doc.language || []).join(', ') || null,
+    description: typeof doc.description === 'string' ? doc.description : (doc.description?.value || null),
     cover: doc.cover_i
       ? {
           small: OL_COVER(doc.cover_i, 'S'),
@@ -100,6 +102,7 @@ function mapBrasilApi(item) {
     pageCount: item.page_count || null,
     categories: item.subjects || [],
     language: 'pt',
+    description: item.synopsis || null,
     cover: item.cover_url
       ? {
           small: item.cover_url,
