@@ -63,10 +63,13 @@ async function findDuplicate(book) {
   const author = normalize(book.authors?.[0])
   for (const d of snap.docs) {
     const b = d.data()
-    if (keys.length) {
-      const existing = isbnKeys(b.isbn)
-      if (existing.some((k) => keys.includes(k))) return b
+    const existingKeys = isbnKeys(b.isbn)
+
+    if (keys.length > 0 && existingKeys.length > 0) {
+      if (existingKeys.some((k) => keys.includes(k))) return b
+      continue
     }
+
     if (
       title &&
       author &&
