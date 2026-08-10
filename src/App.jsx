@@ -6,10 +6,36 @@ import {
   addBook,
   deleteBook,
   subscribeBooks,
+  updateCover,
   updateLocation,
   updateTags,
 } from './lib/books'
 import './App.css'
+
+// Redimensiona a imagem para caber em maxSize (lado maior) e devolve um data URL
+// JPEG comprimido, adequado para armazenar direto no documento do Firestore.
+function resizeImage(file, maxSize = 400, quality = 0.8) {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    const url = URL.createObjectURL(file)
+    img.onload = () => {
+      URL.revokeObjectURL(url)
+      const scale = Math.min(1, maxSize / Math.max(img.width, img.height))
+      const w = Math.round(img.width * scale)
+      const h = Math.round(img.height * scale)
+      const canvas = document.createElement('canvas')
+      canvas.width = w
+      canvas.height = h
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h)
+      resolve(canvas.toDataURL('image/jpeg', quality))
+    }
+    img.onerror = () => {
+      URL.revokeObjectURL(url)
+      reject(new Error('Não foi possível ler a imagem.'))
+    }
+    img.src = url
+  })
+}
 
 function Cover({ book, onClick }) {
   const cleanIsbn = book.isbn ? book.isbn.replace(/[^0-9Xx]/g, '') : null
@@ -38,12 +64,12 @@ function Cover({ book, onClick }) {
     : null
 
   // Estado que armazena a URL ativa da capa
-  const [src, setSrc] = useState(book.cover?.medium || book.cover?.small || amazonUrl || googleUrl)
+  const [src, setSrc] = useState(book.cover?.medium || book.cover?.small || book.customCover || amazonUrl || googleUrl)
 
   // Sincroniza o src caso as propriedades mudem
   useEffect(() => {
-    setSrc(book.cover?.medium || book.cover?.small || amazonUrl || googleUrl)
-  }, [book.cover, amazonUrl, googleUrl])
+    setSrc(book.cover?.medium || book.cover?.small || book.customCover || amazonUrl || googleUrl)
+  }, [book.cover, book.customCover, amazonUrl, googleUrl])
 
   // Lida com falhas de carregamento ou imagens vazias
   function handleImageError() {
@@ -139,11 +165,11 @@ function BookDetailsModal({ book, onClose }) {
     ? `https://books.google.com/books/content?vid=ISBN${cleanIsbn}&printsec=frontcover&img=1&zoom=1`
     : null
 
-  const [src, setSrc] = useState(book.cover?.large || book.cover?.medium || book.cover?.small || amazonUrl || googleUrl)
+  const [src, setSrc] = useState(book.cover?.large || book.cover?.medium || book.cover?.small || book.customCover || amazonUrl || googleUrl)
 
   useEffect(() => {
-    setSrc(book.cover?.large || book.cover?.medium || book.cover?.small || amazonUrl || googleUrl)
-  }, [book.cover, amazonUrl, googleUrl])
+    setSrc(book.cover?.large || book.cover?.medium || book.cover?.small || book.customCover || amazonUrl || googleUrl)
+  }, [book.cover, book.customCover, amazonUrl, googleUrl])
 
   function handleImageError() {
     if (src === amazonUrl && googleUrl) {
@@ -652,6 +678,60 @@ function TagEditor({ book }) {
 
 const PAGE_SIZE = 20
 
+// Só exibido quando o livro não tem capa vinda das APIs de metadados.
+function CoverEditor({ book }) {
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState(null)
+
+  async function handleChange(e) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    setBusy(true)
+    setError(null)
+    try {
+      const dataUrl = await resizeImage(file)
+      await updateCover(book.id, dataUrl)
+    } catch (err) {
+      setError(err.message || 'Falha ao enviar a capa.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function handleRemove() {
+    setBusy(true)
+    setError(null)
+    try {
+      await updateCover(book.id, null)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <p className="book-location">
+      🖼️{' '}
+      <label className="link" style={{ cursor: busy ? 'default' : 'pointer' }}>
+        {busy ? 'Enviando…' : book.customCover ? 'Trocar capa' : 'Adicionar capa'}
+        <input
+          type="file"
+          accept="image/*"
+          onChange={handleChange}
+          disabled={busy}
+          style={{ display: 'none' }}
+        />
+      </label>
+      {book.customCover && !busy && (
+        <button className="link" onClick={handleRemove}>
+          Remover capa
+        </button>
+      )}
+      {error && <span className="location-value"> {error}</span>}
+    </p>
+  )
+}
+
 function FindView({ books, loading, editable, actions, onShowDetails }) {
   const [filter, setFilter] = useState('')
   const [page, setPage] = useState(1)
@@ -755,6 +835,9 @@ function FindView({ books, loading, editable, actions, onShowDetails }) {
                   📍 <span className="location-value">{book.location}</span>
                 </p>
               )
+            )}
+            {editable && !book.cover?.medium && !book.cover?.small && (
+              <CoverEditor book={book} />
             )}
             {editable && (
               <button className="ghost danger" onClick={() => deleteBook(book.id)}>

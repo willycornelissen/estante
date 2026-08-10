@@ -121,6 +121,13 @@ export async function updateTags(id, tags) {
   })
 }
 
+export async function updateCover(id, customCover) {
+  await updateDoc(doc(db, 'books', id), {
+    customCover,
+    updatedAt: serverTimestamp(),
+  })
+}
+
 export async function deleteBook(id) {
   await deleteDoc(doc(db, 'books', id))
 }
