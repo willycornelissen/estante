@@ -55,18 +55,122 @@ function mapOpenLibrary(doc) {
   }
 }
 
-async function searchGoogleBooks(query) {
+function normalize(s) {
+  return (s || '')
+    .toString()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+}
+
+const STOPWORDS = new Set([
+  'de', 'do', 'da', 'dos', 'das', 'e', 'o', 'a', 'os', 'as',
+  'em', 'um', 'uma', 'and', 'the', 'of', 'by', 'to', 'for', 'in', 'on', 'at'
+])
+
+function authorMatchesQuery(author, normQ) {
+  if (!author) return false
+  const normAuthor = normalize(author)
+  const qWords = normQ.split(' ').filter(w => w.length > 1 && !STOPWORDS.has(w))
+  if (qWords.length === 0) return false
+  return qWords.every((word) => normAuthor.includes(word))
+}
+
+function parseSearchQuery(query) {
+  const trimmed = (query || '').trim()
+
+  // Check for author: / autor: / inauthor:
+  const authorMatch = trimmed.match(/^(autor|author|inauthor)\s*:\s*(.+)$/i)
+  if (authorMatch) {
+    return {
+      type: 'author',
+      value: authorMatch[2].trim()
+    }
+  }
+
+  // Check for titulo: / title: / intitle:
+  const titleMatch = trimmed.match(/^(titulo|title|intitle)\s*:\s*(.+)$/i)
+  if (titleMatch) {
+    return {
+      type: 'title',
+      value: titleMatch[2].trim()
+    }
+  }
+
+  // Check for isbn:
+  const isbnMatch = trimmed.match(/^(isbn)\s*:\s*(.+)$/i)
+  if (isbnMatch) {
+    return {
+      type: 'isbn',
+      value: isbnMatch[2].trim()
+    }
+  }
+
+  return {
+    type: 'general',
+    value: trimmed
+  }
+}
+
+function filterByAuthorHeuristic(items, parsed) {
+  if (parsed.type !== 'general') return items
+
+  const normQ = normalize(parsed.value)
+  if (!normQ) return items
+
+  const qWords = normQ.split(' ').filter(w => w.length > 1 && !STOPWORDS.has(w))
+  if (qWords.length < 2) return items
+
+  // Check if any item has an author that matches the query
+  const hasAuthorMatch = items.some((item) =>
+    (item.authors || []).some((author) => authorMatchesQuery(author, normQ))
+  )
+
+  if (hasAuthorMatch) {
+    // Keep only the items that have a matching author
+    return items.filter((item) =>
+      (item.authors || []).some((author) => authorMatchesQuery(author, normQ))
+    )
+  }
+
+  return items
+}
+
+async function searchGoogleBooks(parsed) {
   const key = import.meta.env.VITE_GOOGLE_BOOKS_API_KEY
   if (!key) return { ok: false, reason: 'sem chave do Google Books', items: [] }
-  const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=10&country=BR&key=${key}`
+  
+  let apiQuery = ''
+  if (parsed.type === 'author') {
+    apiQuery = `inauthor:"${parsed.value}"`
+  } else if (parsed.type === 'title') {
+    apiQuery = `intitle:"${parsed.value}"`
+  } else if (parsed.type === 'isbn') {
+    apiQuery = `isbn:${parsed.value}`
+  } else {
+    apiQuery = parsed.value
+  }
+
+  const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(apiQuery)}&maxResults=10&country=BR&key=${key}`
   const res = await fetch(url)
   if (!res.ok) return { ok: false, reason: `http-${res.status}`, items: [] }
   const data = await res.json()
   return { ok: true, items: (data.items || []).map(mapGoogle) }
 }
 
-async function searchOpenLibrary(query) {
-  const url = `https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&limit=10`
+async function searchOpenLibrary(parsed) {
+  let url = ''
+  if (parsed.type === 'author') {
+    url = `https://openlibrary.org/search.json?author=${encodeURIComponent(parsed.value)}&limit=10`
+  } else if (parsed.type === 'title') {
+    url = `https://openlibrary.org/search.json?title=${encodeURIComponent(parsed.value)}&limit=10`
+  } else if (parsed.type === 'isbn') {
+    url = `https://openlibrary.org/search.json?isbn=${encodeURIComponent(parsed.value)}&limit=10`
+  } else {
+    url = `https://openlibrary.org/search.json?q=${encodeURIComponent(parsed.value)}&limit=10`
+  }
   const res = await fetch(url)
   if (!res.ok) return { ok: false, reason: `http-${res.status}`, items: [] }
   const data = await res.json()
@@ -125,8 +229,8 @@ function mapBrasilApi(item) {
   }
 }
 
-async function searchBrasilApi(query) {
-  const isbn = query.replace(/[^0-9Xx]/g, '')
+async function searchBrasilApi(parsed) {
+  const isbn = parsed.value.replace(/[^0-9Xx]/g, '')
   if (isbn.length !== 10 && isbn.length !== 13) {
     return { ok: false, reason: 'não é um ISBN', items: [] }
   }
@@ -138,18 +242,24 @@ async function searchBrasilApi(query) {
 }
 
 export async function searchBooks(query) {
-  const trimmed = (query || '').trim()
-  if (!trimmed) return { items: [], warning: null }
+  const parsed = parseSearchQuery(query)
+  if (!parsed.value) return { items: [], warning: null }
 
-  const gb = await searchGoogleBooks(trimmed)
-  if (gb.ok && gb.items.length > 0) return { items: gb.items, warning: null }
+  const gb = await searchGoogleBooks(parsed)
+  if (gb.ok && gb.items.length > 0) {
+    const filtered = filterByAuthorHeuristic(gb.items, parsed)
+    return { items: filtered, warning: null }
+  }
 
-  const ol = await searchOpenLibrary(trimmed)
-  if (ol.ok && ol.items.length > 0) return { items: ol.items, warning: null }
+  const ol = await searchOpenLibrary(parsed)
+  if (ol.ok && ol.items.length > 0) {
+    const filtered = filterByAuthorHeuristic(ol.items, parsed)
+    return { items: filtered, warning: null }
+  }
 
-  const isbn = trimmed.replace(/[^0-9Xx]/g, '')
+  const isbn = parsed.value.replace(/[^0-9Xx]/g, '')
   if (isbn.length === 10 || isbn.length === 13) {
-    const br = await searchBrasilApi(trimmed)
+    const br = await searchBrasilApi(parsed)
     if (br.ok && br.items.length > 0) return { items: br.items, warning: null }
   }
 
