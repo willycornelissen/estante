@@ -108,6 +108,15 @@ function parseSearchQuery(query) {
     }
   }
 
+  // Auto-detect raw ISBN (10 or 13 digits, optionally with hyphens or spaces, optionally ending in X/x)
+  const cleanIsbn = trimmed.replace(/[^0-9Xx]/g, '')
+  if ((cleanIsbn.length === 10 || cleanIsbn.length === 13) && /^[0-9Xx\s-]+$/.test(trimmed)) {
+    return {
+      type: 'isbn',
+      value: cleanIsbn
+    }
+  }
+
   return {
     type: 'general',
     value: trimmed
