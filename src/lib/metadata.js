@@ -1,6 +1,6 @@
 // Busca de metadados de livros: Google Books primeiro, OpenLibrary como fallback.
-// Ambas são APIs HTTP GET com JSON; o Google Books exige chave de API gratuita
-// (VITE_GOOGLE_BOOKS_API_KEY), o OpenLibrary funciona sem chave.
+// Ambas são APIs HTTP GET com JSON e funcionam sem chave; a chave do Google Books
+// (VITE_GOOGLE_BOOKS_API_KEY), quando configurada, só aumenta a cota diária.
 
 const OL_COVER = (id, size) =>
   `https://covers.openlibrary.org/b/id/${id}-${size}.jpg`
@@ -147,10 +147,36 @@ function filterByAuthorHeuristic(items, parsed) {
   return items
 }
 
+function isbn13Check(digits) {
+  let sum = 0
+  for (let i = 0; i < 12; i++) {
+    sum += Number(digits[i]) * (i % 2 === 0 ? 1 : 3)
+  }
+  return String((10 - (sum % 10)) % 10)
+}
+
+function isbn10Check(digits) {
+  let sum = 0
+  for (let i = 0; i < 9; i++) sum += (10 - i) * Number(digits[i])
+  const rem = sum % 11
+  return rem === 0 ? '0' : rem === 1 ? 'X' : String(11 - rem)
+}
+
+function alternateIsbn(digits) {
+  if (digits.length === 10) {
+    const core = digits.slice(0, 9)
+    return '978' + core + isbn13Check('978' + core)
+  }
+  if (digits.length === 13 && digits.startsWith('978')) {
+    const core = digits.slice(3, 12)
+    return core + isbn10Check(core)
+  }
+  return null
+}
+
 async function searchGoogleBooks(parsed) {
   const key = import.meta.env.VITE_GOOGLE_BOOKS_API_KEY
-  if (!key) return { ok: false, reason: 'sem chave do Google Books', items: [] }
-  
+
   let apiQuery = ''
   if (parsed.type === 'author') {
     apiQuery = `inauthor:"${parsed.value}"`
@@ -162,7 +188,11 @@ async function searchGoogleBooks(parsed) {
     apiQuery = parsed.value
   }
 
-  const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(apiQuery)}&maxResults=10&country=BR&key=${key}`
+  // ISBN é identificador exato: sem country=BR para não filtrar edições
+  // sem direitos de venda no Brasil (ex.: edições portuguesas).
+  let url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(apiQuery)}&maxResults=10`
+  if (parsed.type !== 'isbn') url += '&country=BR'
+  if (key) url += `&key=${key}`
   const res = await fetch(url)
   if (!res.ok) return { ok: false, reason: `http-${res.status}`, items: [] }
   const data = await res.json()
@@ -267,7 +297,29 @@ export async function searchBooks(query) {
   }
 
   const isbn = parsed.value.replace(/[^0-9Xx]/g, '')
-  if (isbn.length === 10 || isbn.length === 13) {
+  if (parsed.type === 'isbn' && (isbn.length === 10 || isbn.length === 13)) {
+    const alt = alternateIsbn(isbn)
+
+    if (alt && alt !== isbn) {
+      const gbAlt = await searchGoogleBooks({ type: 'isbn', value: alt })
+      if (gbAlt.ok && gbAlt.items.length > 0) return { items: gbAlt.items, warning: null }
+
+      const olAlt = await searchOpenLibrary({ type: 'isbn', value: alt })
+      if (olAlt.ok && olAlt.items.length > 0) return { items: olAlt.items, warning: null }
+    }
+
+    // O operador isbn: do Google às vezes não acha o volume, mas a busca
+    // geral pelos dígitos encontra; filtra para manter só o ISBN certo.
+    const gbLoose = await searchGoogleBooks({ type: 'general', value: isbn })
+    if (gbLoose.ok && gbLoose.items.length > 0) {
+      const wanted = alt && alt !== isbn ? [isbn, alt] : [isbn]
+      const exact = gbLoose.items.filter((b) => {
+        const d = (b.isbn || '').replace(/[^0-9Xx]/g, '')
+        return wanted.includes(d)
+      })
+      if (exact.length > 0) return { items: exact, warning: null }
+    }
+
     const br = await searchBrasilApi(parsed)
     if (br.ok && br.items.length > 0) return { items: br.items, warning: null }
   }
