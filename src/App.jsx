@@ -512,6 +512,11 @@ function SearchView({ onAdded, actions, onShowDetails }) {
       tags,
     })
     onAdded(location)
+    setQuery('')
+    setItems([])
+    setWarning(null)
+    setSearched(false)
+    setAddingIsbn(null)
   }
 
   async function handleManualSave(book) {
